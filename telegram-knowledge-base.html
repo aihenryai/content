@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מאגר הידע של הנרי - AI בינה מלאכותית</title>
+    <meta name="description" content="מאגר ידע מקיף על בינה מלאכותית - כלים, סדנאות, טיפים ועדכונים">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <i class="fas fa-brain"></i>
+                    AI עם הנרי
+                </h1>
+                <nav class="main-nav">
+                    <button class="nav-btn active" data-view="home">
+                        <i class="fas fa-home"></i>
+                        ראשי
+                    </button>
+                    <button class="nav-btn" data-view="categories">
+                        <i class="fas fa-folder"></i>
+                        קטגוריות
+                    </button>
+                    <button class="nav-btn" data-view="timeline">
+                        <i class="fas fa-clock"></i>
+                        ציר זמן
+                    </button>
+                    <button class="nav-btn" data-view="search">
+                        <i class="fas fa-search"></i>
+                        חיפוש
+                    </button>
+                    <button class="nav-btn" data-view="links">
+                        <i class="fas fa-link"></i>
+                        קישורים
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Home View -->
+            <section id="home-view" class="view active">
+                <div class="hero-section">
+                    <h2 class="hero-title">ברוכים הבאים למאגר הידע שלי!</h2>
+                    <p class="hero-subtitle">כאן תמצאו את כל התכנים שפרסמתי בערוץ הטלגרם - סדנאות, כלי AI, טיפים ועוד</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-message"></i>
+                            <span class="stat-number" id="total-messages">0</span>
+                            <span class="stat-label">הודעות</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-tools"></i>
+                            <span class="stat-number" id="total-tools">0</span>
+                            <span class="stat-label">כלי AI</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span class="stat-number" id="total-workshops">0</span>
+                            <span class="stat-label">סדנאות</span>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-lightbulb"></i>
+                            <span class="stat-number" id="total-tips">0</span>
+                            <span class="stat-label">טיפים</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Search -->
+                <div class="quick-search">
+                    <input type="text" id="quick-search-input" placeholder="חיפוש מהיר...">
+                    <button id="quick-search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <!-- Recent Messages -->
+                <div class="recent-section">
+                    <h3>הודעות אחרונות</h3>
+                    <div id="recent-messages" class="messages-grid">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Categories View -->
+            <section id="categories-view" class="view">
+                <h2>קטגוריות</h2>
+                <div class="categories-grid">
+                    <div class="category-card" data-category="ai-tools">
+                        <i class="fas fa-robot"></i>
+                        <h3>כלי AI</h3>
+                        <p>ChatGPT, Claude, Midjourney ועוד</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                    <div class="category-card" data-category="workshops">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <h3>סדנאות וקורסים</h3>
+                        <p>למידה מעשית ומעמיקה</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                    <div class="category-card" data-category="news">
+                        <i class="fas fa-newspaper"></i>
+                        <h3>חדשות ועדכונים</h3>
+                        <p>מה חדש בעולם ה-AI</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                    <div class="category-card" data-category="tips">
+                        <i class="fas fa-magic"></i>
+                        <h3>טיפים וטריקים</h3>
+                        <p>פרומפטים ושיטות עבודה</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                    <div class="category-card" data-category="cases">
+                        <i class="fas fa-briefcase"></i>
+                        <h3>מקרי שימוש</h3>
+                        <p>דוגמאות מהשטח</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                    <div class="category-card" data-category="resources">
+                        <i class="fas fa-bookmark"></i>
+                        <h3>קישורים ומקורות</h3>
+                        <p>חומרי עזר נוספים</p>
+                        <span class="category-count">0 פריטים</span>
+                    </div>
+                </div>
+                
+                <div id="category-messages" class="category-messages">
+                    <!-- Category messages will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Timeline View -->
+            <section id="timeline-view" class="view">
+                <h2>ציר זמן</h2>
+                <div id="timeline-container" class="timeline">
+                    <!-- Timeline will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Search View -->
+            <section id="search-view" class="view">
+                <h2>חיפוש מתקדם</h2>
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="advanced-search" placeholder="הקלד/י כאן כדי לחפש...">
+                        <div class="search-filters">
+                            <select id="filter-category">
+                                <option value="">כל הקטגוריות</option>
+                                <option value="ai-tools">כלי AI</option>
+                                <option value="workshops">סדנאות</option>
+                                <option value="news">חדשות</option>
+                                <option value="tips">טיפים</option>
+                                <option value="cases">מקרי שימוש</option>
+                                <option value="resources">קישורים</option>
+                            </select>
+                            <select id="filter-level">
+                                <option value="">כל הרמות</option>
+                                <option value="beginner">מתחילים</option>
+                                <option value="intermediate">ביניים</option>
+                                <option value="advanced">מתקדמים</option>
+                            </select>
+                            <button id="search-btn" class="btn-primary">
+                                <i class="fas fa-search"></i>
+                                חפש
+                            </button>
+                        </div>
+                    </div>
+                    <div id="search-results" class="search-results">
+                        <!-- Search results will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Links View -->
+            <section id="links-view" class="view">
+                <h2>הקישורים שלי</h2>
+                <div class="links-grid">
+                    <a href="https://youtube.com/@AIWithHenry?sub_confirmation=1" target="_blank" class="link-card youtube">
+                        <i class="fab fa-youtube"></i>
+                        <h3>ערוץ YouTube</h3>
+                        <p>סרטונים, הדרכות וטיפים על AI</p>
+                        <span class="link-action">
+                            <i class="fas fa-external-link-alt"></i>
+                            הירשמו לערוץ
+                        </span>
+                    </a>
+                    
+                    <a href="https://affiliate.notion.so/aitool" target="_blank" class="link-card notion">
+                        <i class="fas fa-database"></i>
+                        <h3>מאגר כלי AI</h3>
+                        <p>אוסף מקיף של כלי בינה מלאכותית</p>
+                        <span class="link-action">
+                            <i class="fas fa-external-link-alt"></i>
+                            למאגר הכלים
+                        </span>
+                    </a>
+                    
+                    <a href="https://chatgpt.com/g/g-JMe9U0Y0A-bvt-kly-bynh-henry-ai" target="_blank" class="link-card chatgpt">
+                        <i class="fas fa-robot"></i>
+                        <h3>הבוט שלי ב-ChatGPT</h3>
+                        <p>שאלו שאלות על כלי AI</p>
+                        <span class="link-action">
+                            <i class="fas fa-external-link-alt"></i>
+                            לשיחה עם הבוט
+                        </span>
+                    </a>
+                    
+                    <a href="https://taplink.cc/henry.ai" target="_blank" class="link-card taplink">
+                        <i class="fas fa-link"></i>
+                        <h3>כל הערוצים שלי</h3>
+                        <p>קישורים לכל ערוצי הבינה המלאכותית</p>
+                        <span class="link-action">
+                            <i class="fas fa-external-link-alt"></i>
+                            לכל הקישורים
+                        </span>
+                    </a>
+                </div>
+                
+                <div class="social-section">
+                    <h3>עקבו אחרי ברשתות</h3>
+                    <div class="social-links">
+                        <a href="#" class="social-link facebook">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="social-link whatsapp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" class="social-link telegram">
+                            <i class="fab fa-telegram"></i>
+                        </a>
+                        <a href="#" class="social-link linkedin">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2024 AI עם הנרי. כל הזכויות שמורות.</p>
+            <p class="footer-note">המידע מתעדכן מדי חודש מערוץ הטלגרם</p>
+        </div>
+    </footer>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-body">
+                <!-- Message details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
