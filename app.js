@@ -17,34 +17,75 @@ const categoryKeywords = {
 
 // ===== Initialize App =====
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('App initializing...');
     await loadMessages();
     initializeEventListeners();
     showView('categories');
     updateStats();
+    console.log('App ready!');
 });
 
 // ===== Load Messages from JSON =====
 async function loadMessages() {
     try {
         showLoading(true);
+        
+        // Check if file exists
         const response = await fetch('result.json');
+        if (!response.ok) {
+            throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        // Debug: Check data structure
+        console.log('Loaded data:', data);
+        console.log('Messages array:', data.messages);
+        
+        // Expected structure: { messages: [...] }
+        // Each message: { id, date, text: [...], from, entities: [...], media: {...} }
+        
         messagesData = data.messages || [];
         
         // Process and categorize messages
         messagesData = messagesData.map((msg, index) => {
-            const text = Array.isArray(msg.text) ? msg.text.join(' ') : msg.text;
+            // Handle text array - join with line breaks
+            let text = '';
+            if (Array.isArray(msg.text)) {
+                // Filter out non-string elements and join with line breaks
+                text = msg.text
+                    .filter(t => t !== null && t !== undefined)
+                    .map(t => {
+                        if (typeof t === 'string') return t;
+                        if (typeof t === 'object') return JSON.stringify(t);
+                        return String(t);
+                    })
+                    .join('\n');
+            } else if (typeof msg.text === 'string') {
+                text = msg.text;
+            } else if (typeof msg.text === 'object' && msg.text !== null) {
+                // Handle nested text objects
+                text = JSON.stringify(msg.text);
+            } else {
+                text = '';
+            }
+            
             return {
                 ...msg,
                 id: msg.id || index,
                 text: text,
                 category: detectCategory(text),
-                date: new Date(msg.date)
+                date: msg.date ? new Date(msg.date) : new Date()
             };
         });
         
         // Sort by date (newest first)
         messagesData.sort((a, b) => b.date - a.date);
+        
+        // Debug: Log first message structure
+        if (messagesData.length > 0) {
+            console.log('First message structure:', messagesData[0]);
+            console.log('Text type:', typeof messagesData[0].text);
+        }
         
         showLoading(false);
         displayCategories();
@@ -249,7 +290,12 @@ function displaySearchResults(results, query) {
     
     if (results.length === 0) {
         container.innerHTML = `
-            <p class="search-hint">לא נמצאו תוצאות עבור "${query}"</p>
+            <div class="no-results">
+                <p class="search-hint">לא נמצאו תוצאות עבור "${query}"</p>
+                <button class="btn-primary" onclick="showView('categories')">
+                    חזרה לקטגוריות
+                </button>
+            </div>
         `;
         return;
     }
@@ -489,21 +535,80 @@ function truncateText(text, maxLength) {
 
 function formatMessage(text) {
     if (!text) return '';
+    
+    // Ensure text is a string
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
+    
     // Convert URLs to links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+    let formattedText = text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
+    
+    // Convert line breaks to <br> tags
+    formattedText = formattedText.replace(/\n/g, '<br>');
+    
+    return formattedText;
 }
 
 function extractTags(message) {
     const tags = [];
-    if (message.entities) {
+    
+    // Extract hashtags from text
+    if (message.text) {
+        const hashtagRegex = /#[\u0590-\u05FF\w]+/g;
+        const matches = message.text.match(hashtagRegex);
+        if (matches) {
+            tags.push(...matches);
+        }
+    }
+    
+    // Extract from entities if available
+    if (message.entities && Array.isArray(message.entities)) {
         message.entities.forEach(entity => {
-            if (entity.type === 'hashtag') {
+            if (entity.type === 'hashtag' && entity.text) {
                 tags.push(entity.text);
             }
         });
     }
-    return tags;
+    
+    // Remove duplicates
+    return [...new Set(tags)];
+}
+
+// ===== Process Entities =====
+function processEntities(message) {
+    if (!message.entities || !Array.isArray(message.entities)) return message.text;
+    
+    let processedText = message.text;
+    
+    // Sort entities by offset in reverse order to avoid position shifts
+    const sortedEntities = [...message.entities].sort((a, b) => b.offset - a.offset);
+    
+    sortedEntities.forEach(entity => {
+        if (entity.type === 'url' || entity.type === 'text_link') {
+            // URLs are already handled in formatMessage
+            return;
+        }
+        
+        if (entity.type === 'bold') {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            processedText = processedText.substring(0, start) + 
+                           '<strong>' + processedText.substring(start, end) + '</strong>' + 
+                           processedText.substring(end);
+        }
+        
+        if (entity.type === 'italic') {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            processedText = processedText.substring(0, start) + 
+                           '<em>' + processedText.substring(start, end) + '</em>' + 
+                           processedText.substring(end);
+        }
+    });
+    
+    return processedText;
 }
 
 function getMediaHtml(media) {
@@ -570,5 +675,26 @@ function showLoading(show) {
 }
 
 function showError(message) {
-    alert(message); // You can replace with a better notification system
+    // Create a nice error message
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #f44336;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-size: 16px;
+    `;
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
 }
