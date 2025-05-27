@@ -24,28 +24,19 @@
                     <i class="fas fa-brain"></i>
                     AI עם הנרי
                 </h1>
-                <nav class="main-nav">
-                    <button class="nav-btn active" data-view="home">
-                        <i class="fas fa-home"></i>
-                        ראשי
-                    </button>
-                    <button class="nav-btn" data-view="categories">
-                        <i class="fas fa-folder"></i>
-                        קטגוריות
-                    </button>
-                    <button class="nav-btn" data-view="timeline">
-                        <i class="fas fa-clock"></i>
-                        ציר זמן
-                    </button>
-                    <button class="nav-btn" data-view="search">
+                <button class="search-toggle" id="search-toggle">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <!-- Search Bar (Hidden by default) -->
+            <div class="header-search" id="header-search">
+                <div class="search-input-wrapper">
+                    <input type="text" id="header-search-input" placeholder="חפש בכל התכנים...">
+                    <button id="header-search-btn">
                         <i class="fas fa-search"></i>
-                        חיפוש
                     </button>
-                    <button class="nav-btn" data-view="links">
-                        <i class="fas fa-link"></i>
-                        קישורים
-                    </button>
-                </nav>
+                </div>
             </div>
         </div>
     </header>
@@ -53,114 +44,250 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Home View -->
-            <section id="home-view" class="view active">
-                <div class="hero-section">
-                    <h2 class="hero-title">ברוכים הבאים למאגר הידע שלי!</h2>
-                    <p class="hero-subtitle">כאן תמצאו את כל התכנים שפרסמתי בערוץ הטלגרם - סדנאות, כלי AI, טיפים ועוד</p>
+            <!-- Hero Section with Links -->
+            <section class="hero-section">
+                <h2 class="hero-title">ברוכים הבאים למאגר הידע שלי!</h2>
+                <p class="hero-subtitle">כל התכנים מערוץ הטלגרם - מונגש, מסודר וקל לחיפוש</p>
+                
+                <!-- Social Links Cards -->
+                <div class="hero-links">
+                    <a href="https://youtube.com/@AIWithHenry?sub_confirmation=1" target="_blank" class="hero-link-card youtube">
+                        <div class="link-icon">
+                            <i class="fab fa-youtube"></i>
+                        </div>
+                        <div class="link-content">
+                            <h3>ערוץ YouTube</h3>
+                            <p>הדרכות וטיפים בוידאו</p>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
                     
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <i class="fas fa-message"></i>
-                            <span class="stat-number" id="total-messages">0</span>
-                            <span class="stat-label">הודעות</span>
+                    <a href="https://affiliate.notion.so/aitool" target="_blank" class="hero-link-card notion">
+                        <div class="link-icon">
+                            <i class="fas fa-database"></i>
                         </div>
-                        <div class="stat-card">
-                            <i class="fas fa-tools"></i>
-                            <span class="stat-number" id="total-tools">0</span>
-                            <span class="stat-label">כלי AI</span>
+                        <div class="link-content">
+                            <h3>מאגר כלי AI</h3>
+                            <p>אוסף מקיף ומעודכן</p>
                         </div>
-                        <div class="stat-card">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span class="stat-number" id="total-workshops">0</span>
-                            <span class="stat-label">סדנאות</span>
+                        <div class="link-arrow">
+                            <i class="fas fa-arrow-left"></i>
                         </div>
-                        <div class="stat-card">
-                            <i class="fas fa-lightbulb"></i>
-                            <span class="stat-number" id="total-tips">0</span>
-                            <span class="stat-label">טיפים</span>
+                    </a>
+                    
+                    <a href="https://chatgpt.com/g/g-JMe9U0Y0A-bvt-kly-bynh-henry-ai" target="_blank" class="hero-link-card chatgpt">
+                        <div class="link-icon">
+                            <i class="fas fa-robot"></i>
                         </div>
-                    </div>
+                        <div class="link-content">
+                            <h3>הבוט שלי</h3>
+                            <p>שאלות ותשובות על AI</p>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
+                    
+                    <a href="https://taplink.cc/henry.ai" target="_blank" class="hero-link-card taplink">
+                        <div class="link-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="link-content">
+                            <h3>כל הערוצים</h3>
+                            <p>קישורים לכל הפלטפורמות</p>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+                    </a>
                 </div>
+            </section>
 
-                <!-- Quick Search -->
-                <div class="quick-search">
-                    <input type="text" id="quick-search-input" placeholder="חיפוש מהיר...">
-                    <button id="quick-search-btn">
-                        <i class="fas fa-search"></i>
+            <!-- Main Navigation -->
+            <section class="main-navigation">
+                <div class="nav-grid">
+                    <button class="nav-card active" data-view="categories">
+                        <div class="nav-card-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <h3>קטגוריות</h3>
+                        <p>גלישה לפי נושאים</p>
+                    </button>
+                    
+                    <button class="nav-card" data-view="timeline">
+                        <div class="nav-card-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>ציר זמן</h3>
+                        <p>סדר כרונולוגי</p>
+                    </button>
+                    
+                    <button class="nav-card" id="random-button">
+                        <div class="nav-card-icon">
+                            <i class="fas fa-dice"></i>
+                        </div>
+                        <h3>הפתע אותי!</h3>
+                        <p>תוכן אקראי</p>
+                    </button>
+                    
+                    <button class="nav-card" data-view="advanced-search">
+                        <div class="nav-card-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>חיפוש מתקדם</h3>
+                        <p>סינון לפי קריטריונים</p>
                     </button>
                 </div>
-
-                <!-- Recent Messages -->
-                <div class="recent-section">
-                    <h3>הודעות אחרונות</h3>
-                    <div id="recent-messages" class="messages-grid">
-                        <!-- Messages will be loaded here -->
-                    </div>
-                </div>
             </section>
 
-            <!-- Categories View -->
-            <section id="categories-view" class="view">
-                <h2>קטגוריות</h2>
-                <div class="categories-grid">
-                    <div class="category-card" data-category="ai-tools">
-                        <i class="fas fa-robot"></i>
-                        <h3>כלי AI</h3>
-                        <p>ChatGPT, Claude, Midjourney ועוד</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                    <div class="category-card" data-category="workshops">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <h3>סדנאות וקורסים</h3>
-                        <p>למידה מעשית ומעמיקה</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                    <div class="category-card" data-category="news">
-                        <i class="fas fa-newspaper"></i>
-                        <h3>חדשות ועדכונים</h3>
-                        <p>מה חדש בעולם ה-AI</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                    <div class="category-card" data-category="tips">
-                        <i class="fas fa-magic"></i>
-                        <h3>טיפים וטריקים</h3>
-                        <p>פרומפטים ושיטות עבודה</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                    <div class="category-card" data-category="cases">
-                        <i class="fas fa-briefcase"></i>
-                        <h3>מקרי שימוש</h3>
-                        <p>דוגמאות מהשטח</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                    <div class="category-card" data-category="resources">
-                        <i class="fas fa-bookmark"></i>
-                        <h3>קישורים ומקורות</h3>
-                        <p>חומרי עזר נוספים</p>
-                        <span class="category-count">0 פריטים</span>
-                    </div>
-                </div>
+            <!-- Categories Section (Default View) -->
+            <section id="categories-section" class="content-section active">
+                <h2 class="section-title">קטגוריות תוכן</h2>
                 
-                <div id="category-messages" class="category-messages">
-                    <!-- Category messages will be loaded here -->
+                <div class="categories-container">
+                    <!-- AI Tools Category -->
+                    <div class="category-section" data-category="ai-tools">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-robot"></i>
+                                <h3>כלי AI</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
+
+                    <!-- Workshops Category -->
+                    <div class="category-section" data-category="workshops">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <h3>סדנאות וקורסים</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
+
+                    <!-- News Category -->
+                    <div class="category-section" data-category="news">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-newspaper"></i>
+                                <h3>חדשות ועדכונים</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
+
+                    <!-- Tips Category -->
+                    <div class="category-section" data-category="tips">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-lightbulb"></i>
+                                <h3>טיפים וטריקים</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
+
+                    <!-- Use Cases Category -->
+                    <div class="category-section" data-category="cases">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-briefcase"></i>
+                                <h3>מקרי שימוש</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
+
+                    <!-- Resources Category -->
+                    <div class="category-section" data-category="resources">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-bookmark"></i>
+                                <h3>קישורים ומקורות</h3>
+                                <span class="category-count">0</span>
+                            </div>
+                            <button class="category-expand">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="category-preview">
+                            <div class="preview-messages">
+                                <!-- Recent messages will be loaded here -->
+                            </div>
+                            <button class="show-all-btn">הצג הכל</button>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- Timeline View -->
-            <section id="timeline-view" class="view">
-                <h2>ציר זמן</h2>
+            <!-- Timeline Section -->
+            <section id="timeline-section" class="content-section">
+                <h2 class="section-title">ציר זמן</h2>
+                <div class="timeline-filters">
+                    <button class="timeline-filter active" data-filter="all">הכל</button>
+                    <button class="timeline-filter" data-filter="month">החודש</button>
+                    <button class="timeline-filter" data-filter="week">השבוע</button>
+                </div>
                 <div id="timeline-container" class="timeline">
                     <!-- Timeline will be loaded here -->
                 </div>
             </section>
 
-            <!-- Search View -->
-            <section id="search-view" class="view">
-                <h2>חיפוש מתקדם</h2>
+            <!-- Advanced Search Section -->
+            <section id="advanced-search-section" class="content-section">
+                <h2 class="section-title">חיפוש מתקדם</h2>
                 <div class="search-container">
                     <div class="search-box">
-                        <input type="text" id="advanced-search" placeholder="הקלד/י כאן כדי לחפש...">
+                        <input type="text" id="advanced-search-input" placeholder="הקלד מילות חיפוש...">
                         <div class="search-filters">
                             <select id="filter-category">
                                 <option value="">כל הקטגוריות</option>
@@ -171,11 +298,12 @@
                                 <option value="cases">מקרי שימוש</option>
                                 <option value="resources">קישורים</option>
                             </select>
-                            <select id="filter-level">
-                                <option value="">כל הרמות</option>
-                                <option value="beginner">מתחילים</option>
-                                <option value="intermediate">ביניים</option>
-                                <option value="advanced">מתקדמים</option>
+                            <select id="filter-date">
+                                <option value="">כל הזמן</option>
+                                <option value="week">השבוע האחרון</option>
+                                <option value="month">החודש האחרון</option>
+                                <option value="3months">3 חודשים אחרונים</option>
+                                <option value="year">השנה האחרונה</option>
                             </select>
                             <button id="search-btn" class="btn-primary">
                                 <i class="fas fa-search"></i>
@@ -184,72 +312,22 @@
                         </div>
                     </div>
                     <div id="search-results" class="search-results">
-                        <!-- Search results will be loaded here -->
+                        <p class="search-hint">הקלד מילות חיפוש ולחץ על "חפש" כדי למצוא תוכן</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Links View -->
-            <section id="links-view" class="view">
-                <h2>הקישורים שלי</h2>
-                <div class="links-grid">
-                    <a href="https://youtube.com/@AIWithHenry?sub_confirmation=1" target="_blank" class="link-card youtube">
-                        <i class="fab fa-youtube"></i>
-                        <h3>ערוץ YouTube</h3>
-                        <p>סרטונים, הדרכות וטיפים על AI</p>
-                        <span class="link-action">
-                            <i class="fas fa-external-link-alt"></i>
-                            הירשמו לערוץ
-                        </span>
-                    </a>
-                    
-                    <a href="https://affiliate.notion.so/aitool" target="_blank" class="link-card notion">
-                        <i class="fas fa-database"></i>
-                        <h3>מאגר כלי AI</h3>
-                        <p>אוסף מקיף של כלי בינה מלאכותית</p>
-                        <span class="link-action">
-                            <i class="fas fa-external-link-alt"></i>
-                            למאגר הכלים
-                        </span>
-                    </a>
-                    
-                    <a href="https://chatgpt.com/g/g-JMe9U0Y0A-bvt-kly-bynh-henry-ai" target="_blank" class="link-card chatgpt">
-                        <i class="fas fa-robot"></i>
-                        <h3>הבוט שלי ב-ChatGPT</h3>
-                        <p>שאלו שאלות על כלי AI</p>
-                        <span class="link-action">
-                            <i class="fas fa-external-link-alt"></i>
-                            לשיחה עם הבוט
-                        </span>
-                    </a>
-                    
-                    <a href="https://taplink.cc/henry.ai" target="_blank" class="link-card taplink">
-                        <i class="fas fa-link"></i>
-                        <h3>כל הערוצים שלי</h3>
-                        <p>קישורים לכל ערוצי הבינה המלאכותית</p>
-                        <span class="link-action">
-                            <i class="fas fa-external-link-alt"></i>
-                            לכל הקישורים
-                        </span>
-                    </a>
+            <!-- Category Full View (Hidden by default) -->
+            <section id="category-full-view" class="content-section">
+                <div class="category-full-header">
+                    <button class="back-btn" id="back-to-categories">
+                        <i class="fas fa-arrow-right"></i>
+                        חזרה לקטגוריות
+                    </button>
+                    <h2 id="category-full-title">כותרת קטגוריה</h2>
                 </div>
-                
-                <div class="social-section">
-                    <h3>עקבו אחרי ברשתות</h3>
-                    <div class="social-links">
-                        <a href="#" class="social-link facebook">
-                            <i class="fab fa-facebook"></i>
-                        </a>
-                        <a href="#" class="social-link whatsapp">
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
-                        <a href="#" class="social-link telegram">
-                            <i class="fab fa-telegram"></i>
-                        </a>
-                        <a href="#" class="social-link linkedin">
-                            <i class="fab fa-linkedin"></i>
-                        </a>
-                    </div>
+                <div id="category-full-messages" class="messages-grid">
+                    <!-- Full category messages will be loaded here -->
                 </div>
             </section>
         </div>
@@ -258,8 +336,18 @@
     <!-- Footer -->
     <footer class="main-footer">
         <div class="container">
-            <p>&copy; 2024 AI עם הנרי. כל הזכויות שמורות.</p>
-            <p class="footer-note">המידע מתעדכן מדי חודש מערוץ הטלגרם</p>
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2024 AI עם הנרי. כל הזכויות שמורות.</p>
+                    <p class="footer-note">המידע מתעדכן מדי חודש מערוץ הטלגרם</p>
+                </div>
+                <div class="footer-social">
+                    <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-telegram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
         </div>
     </footer>
 
@@ -272,8 +360,46 @@
     <div id="message-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <div id="modal-body">
+            <div class="modal-header">
+                <span id="modal-date" class="modal-date"></span>
+                <div id="modal-tags" class="modal-tags"></div>
+            </div>
+            <div id="modal-body" class="modal-body">
                 <!-- Message details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-nav-btn" id="prev-message">
+                    <i class="fas fa-chevron-right"></i>
+                    הקודם
+                </button>
+                <button class="modal-share-btn" id="share-message">
+                    <i class="fas fa-share-alt"></i>
+                    שתף
+                </button>
+                <button class="modal-nav-btn" id="next-message">
+                    הבא
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Random Message Modal -->
+    <div id="random-modal" class="modal">
+        <div class="modal-content random-modal">
+            <span class="close">&times;</span>
+            <div class="random-header">
+                <i class="fas fa-dice"></i>
+                <h2>הפתעה! 🎲</h2>
+            </div>
+            <div id="random-modal-body" class="modal-body">
+                <!-- Random message will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="another-random">
+                    <i class="fas fa-dice"></i>
+                    עוד אחד!
+                </button>
             </div>
         </div>
     </div>
