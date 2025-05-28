@@ -51,20 +51,42 @@ async function loadMessages() {
             // Handle text array - join with line breaks
             let text = '';
             if (Array.isArray(msg.text)) {
-                // Filter out non-string elements and join with line breaks
+                // Process each element in the array
                 text = msg.text
                     .filter(t => t !== null && t !== undefined)
                     .map(t => {
+                        // If it's a string, return as is
                         if (typeof t === 'string') return t;
-                        if (typeof t === 'object') return JSON.stringify(t);
+                        
+                        // If it's an object with type and text
+                        if (typeof t === 'object' && t.type && t.text) {
+                            // Handle different types
+                            if (t.type === 'link' || t.type === 'text_link') {
+                                return t.text;
+                            }
+                            if (t.type === 'mention') {
+                                return t.text;
+                            }
+                            if (t.type === 'hashtag') {
+                                return t.text;
+                            }
+                            // Default: return just the text
+                            return t.text || '';
+                        }
+                        
+                        // Otherwise convert to string
                         return String(t);
                     })
                     .join('\n');
             } else if (typeof msg.text === 'string') {
                 text = msg.text;
             } else if (typeof msg.text === 'object' && msg.text !== null) {
-                // Handle nested text objects
-                text = JSON.stringify(msg.text);
+                // Handle single text object
+                if (msg.text.type && msg.text.text) {
+                    text = msg.text.text;
+                } else {
+                    text = JSON.stringify(msg.text);
+                }
             } else {
                 text = '';
             }
@@ -85,6 +107,17 @@ async function loadMessages() {
         if (messagesData.length > 0) {
             console.log('First message structure:', messagesData[0]);
             console.log('Text type:', typeof messagesData[0].text);
+            console.log('Raw text:', messagesData[0].text);
+            
+            // Log a few more messages to understand the pattern
+            console.log('Sample of processed messages:');
+            messagesData.slice(0, 5).forEach((msg, i) => {
+                console.log(`Message ${i}:`, {
+                    text: msg.text.substring(0, 100) + '...',
+                    category: msg.category,
+                    hasEntities: !!msg.entities
+                });
+            });
         }
         
         showLoading(false);
@@ -417,10 +450,13 @@ function showRandomMessage() {
     const modal = document.getElementById('random-modal');
     const modalBody = document.getElementById('random-modal-body');
     
+    // Process the text with entities before formatting
+    const processedText = processTextForDisplay(message);
+    
     modalBody.innerHTML = `
         <div class="message-full">
             <div class="message-date">${formatDate(message.date)}</div>
-            <div class="message-content">${formatMessage(message.text)}</div>
+            <div class="message-content">${formatMessage(processedText)}</div>
             ${message.media ? `<div class="message-media">${getMediaHtml(message.media)}</div>` : ''}
         </div>
     `;
@@ -445,9 +481,12 @@ function showMessageModal(message) {
     modalDate.textContent = formatDate(message.date);
     modalTags.innerHTML = extractTags(message).map(tag => `<span class="tag">${tag}</span>`).join('');
     
+    // Process the text with entities before formatting
+    const processedText = processTextForDisplay(message);
+    
     modalBody.innerHTML = `
         <div class="message-full">
-            <div class="message-content">${formatMessage(message.text)}</div>
+            <div class="message-content">${formatMessage(processedText)}</div>
             ${message.media ? `<div class="message-media">${getMediaHtml(message.media)}</div>` : ''}
         </div>
     `;
@@ -607,6 +646,48 @@ function processEntities(message) {
                            processedText.substring(end);
         }
     });
+    
+    return processedText;
+}
+
+// ===== Process Text for Display =====
+function processTextForDisplay(message) {
+    let processedText = message.text;
+    
+    // Apply entities if they exist
+    if (message.entities && Array.isArray(message.entities)) {
+        // Sort entities by offset in reverse to avoid position changes
+        const sortedEntities = [...message.entities].sort((a, b) => b.offset - a.offset);
+        
+        sortedEntities.forEach(entity => {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            const entityText = processedText.substring(start, end);
+            
+            switch(entity.type) {
+                case 'bold':
+                    processedText = processedText.substring(0, start) + 
+                                  `<strong>${entityText}</strong>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'italic':
+                    processedText = processedText.substring(0, start) + 
+                                  `<em>${entityText}</em>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'text_link':
+                    processedText = processedText.substring(0, start) + 
+                                  `<a href="${entity.url}" target="_blank">${entityText}</a>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'code':
+                    processedText = processedText.substring(0, start) + 
+                                  `<code>${entityText}</code>` + 
+                                  processedText.substring(end);
+                    break;
+            }
+        });
+    }
     
     return processedText;
 }
