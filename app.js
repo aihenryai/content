@@ -1,6 +1,6 @@
 // ===== Global Variables =====
 let messagesData = [];
-let currentView = 'timeline'; // Changed from 'categories' to 'timeline'
+let currentView = 'categories';
 let currentCategory = null;
 let searchResults = [];
 let currentMessageIndex = 0;
@@ -20,43 +20,85 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('App initializing...');
     await loadMessages();
     initializeEventListeners();
-    showView('timeline'); // Changed from 'categories' to 'timeline'
+    showView('categories');
     updateStats();
     console.log('App ready!');
 });
 
-// ===== Load Messages =====
+// ===== Load Messages from JSON =====
 async function loadMessages() {
     try {
         showLoading(true);
         
-        // Simulate loading - replace with actual API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Load from local storage or generate sample data
-        const stored = localStorage.getItem('messagesData');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                messagesData = parsed.map(msg => ({
-                    ...msg,
-                    date: msg.date ? new Date(msg.date) : new Date()
-                }));
-            } catch (e) {
-                console.error('Error parsing stored data:', e);
-                messagesData = generateSampleData();
-            }
-        } else {
-            messagesData = generateSampleData();
-            localStorage.setItem('messagesData', JSON.stringify(messagesData));
+        // Check if file exists
+        const response = await fetch('result.json');
+        if (!response.ok) {
+            throw new Error(`Failed to load data: ${response.status} ${response.statusText}`);
         }
         
-        // Ensure all messages have categories
-        messagesData = messagesData.map(msg => ({
-            ...msg,
-            category: msg.category || detectCategory(msg.text),
-            date: msg.date ? new Date(msg.date) : new Date()
-        }));
+        const data = await response.json();
+        // Debug: Check data structure
+        console.log('Loaded data:', data);
+        console.log('Messages array:', data.messages);
+        
+        // Expected structure: { messages: [...] }
+        // Each message: { id, date, text: [...], from, entities: [...], media: {...} }
+        
+        messagesData = data.messages || [];
+        
+        // Process and categorize messages
+        messagesData = messagesData.map((msg, index) => {
+            // Handle text array - join with line breaks
+            let text = '';
+            if (Array.isArray(msg.text)) {
+                // Process each element in the array
+                text = msg.text
+                    .filter(t => t !== null && t !== undefined)
+                    .map(t => {
+                        // If it's a string, return as is
+                        if (typeof t === 'string') return t;
+                        
+                        // If it's an object with type and text
+                        if (typeof t === 'object' && t.type && t.text) {
+                            // Handle different types
+                            if (t.type === 'link' || t.type === 'text_link') {
+                                return t.text;
+                            }
+                            if (t.type === 'mention') {
+                                return t.text;
+                            }
+                            if (t.type === 'hashtag') {
+                                return t.text;
+                            }
+                            // Default: return just the text
+                            return t.text || '';
+                        }
+                        
+                        // Otherwise convert to string
+                        return String(t);
+                    })
+                    .join('\n');
+            } else if (typeof msg.text === 'string') {
+                text = msg.text;
+            } else if (typeof msg.text === 'object' && msg.text !== null) {
+                // Handle single text object
+                if (msg.text.type && msg.text.text) {
+                    text = msg.text.text;
+                } else {
+                    text = JSON.stringify(msg.text);
+                }
+            } else {
+                text = '';
+            }
+            
+            return {
+                ...msg,
+                id: msg.id || index,
+                text: text,
+                category: detectCategory(text),
+                date: msg.date ? new Date(msg.date) : new Date()
+            };
+        });
         
         // Sort by date (newest first)
         messagesData.sort((a, b) => b.date - a.date);
@@ -283,8 +325,8 @@ function displaySearchResults(results, query) {
         container.innerHTML = `
             <div class="no-results">
                 <p class="search-hint">לא נמצאו תוצאות עבור "${query}"</p>
-                <button class="btn-primary" onclick="showView('timeline')">
-                    חזרה לציר הזמן
+                <button class="btn-primary" onclick="showView('categories')">
+                    חזרה לקטגוריות
                 </button>
             </div>
         `;
@@ -372,83 +414,30 @@ function displayTimeline(filter = 'all') {
         messages = messages.filter(msg => msg.date > weekAgo);
     }
     
-    // Group messages by date
-    const groupedMessages = groupMessagesByDate(messages);
+    // Group by month
+    const grouped = groupByMonth(messages);
     
-    // Create timeline items
-    Object.entries(groupedMessages).forEach(([dateStr, dayMessages]) => {
-        const timelineItem = createTimelineItem(dateStr, dayMessages);
-        container.appendChild(timelineItem);
+    Object.entries(grouped).forEach(([month, msgs]) => {
+        const monthEl = document.createElement('div');
+        monthEl.className = 'timeline-month';
+        monthEl.innerHTML = `<h3 class="timeline-month-title">${month}</h3>`;
+        
+        msgs.forEach(msg => {
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">${formatDate(msg.date)}</div>
+                    <div class="timeline-text">${truncateText(msg.text, 200)}</div>
+                </div>
+            `;
+            item.querySelector('.timeline-content').onclick = () => showMessageModal(msg);
+            monthEl.appendChild(item);
+        });
+        
+        container.appendChild(monthEl);
     });
-    
-    if (messages.length === 0) {
-        container.innerHTML = `
-            <div class="no-timeline-results">
-                <i class="fas fa-calendar-times"></i>
-                <p>אין תוכן להצגה בתקופה הנבחרת</p>
-                <button class="btn-primary" onclick="filterTimeline('all')">הצג הכל</button>
-            </div>
-        `;
-    }
-}
-
-// ===== Filter Timeline =====
-function filterTimeline(filter) {
-    displayTimeline(filter);
-}
-
-// ===== Group Messages By Date =====
-function groupMessagesByDate(messages) {
-    const grouped = {};
-    
-    messages.forEach(msg => {
-        const dateKey = formatDateKey(msg.date);
-        if (!grouped[dateKey]) {
-            grouped[dateKey] = [];
-        }
-        grouped[dateKey].push(msg);
-    });
-    
-    return grouped;
-}
-
-// ===== Create Timeline Item =====
-function createTimelineItem(dateStr, messages) {
-    const item = document.createElement('div');
-    item.className = 'timeline-item';
-    
-    const messagesHtml = messages.map(msg => `
-        <div class="timeline-message" onclick="showMessageModal(${JSON.stringify(msg).replace(/"/g, '&quot;')})">
-            <div class="timeline-message-text">${truncateText(msg.text, 120)}</div>
-            <div class="timeline-message-category">${getCategoryName(msg.category)}</div>
-        </div>
-    `).join('');
-    
-    item.innerHTML = `
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-            <div class="timeline-date">${formatTimelineDate(dateStr)}</div>
-            <div class="timeline-messages">
-                ${messagesHtml}
-            </div>
-            <div class="timeline-count">${messages.length} ${messages.length === 1 ? 'פוסט' : 'פוסטים'}</div>
-        </div>
-    `;
-    
-    return item;
-}
-
-// ===== Get Category Name =====
-function getCategoryName(category) {
-    const categoryNames = {
-        'ai-tools': 'כלי AI',
-        'workshops': 'סדנאות וקורסים',
-        'news': 'חדשות ועדכונים',
-        'tips': 'טיפים וטריקים',
-        'cases': 'מקרי שימוש',
-        'resources': 'קישורים ומקורות'
-    };
-    return categoryNames[category] || category;
 }
 
 // ===== Show Random Message =====
@@ -456,262 +445,337 @@ function showRandomMessage() {
     if (messagesData.length === 0) return;
     
     const randomIndex = Math.floor(Math.random() * messagesData.length);
-    const randomMessage = messagesData[randomIndex];
-    showMessageModal(randomMessage);
+    const message = messagesData[randomIndex];
+    
+    const modal = document.getElementById('random-modal');
+    const modalBody = document.getElementById('random-modal-body');
+    
+    // Process the text with entities before formatting
+    const processedText = processTextForDisplay(message);
+    
+    modalBody.innerHTML = `
+        <div class="message-full">
+            <div class="message-date">${formatDate(message.date)}</div>
+            <div class="message-content">${formatMessage(processedText)}</div>
+            ${message.media ? `<div class="message-media">${getMediaHtml(message.media)}</div>` : ''}
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+    
+    // Another random button
+    document.getElementById('another-random').onclick = () => {
+        showRandomMessage();
+    };
 }
 
 // ===== Show Message Modal =====
 function showMessageModal(message) {
-    currentMessageIndex = messagesData.findIndex(msg => 
-        msg.text === message.text && msg.date.getTime() === message.date.getTime()
-    );
+    const modal = document.getElementById('message-modal');
+    const modalDate = document.getElementById('modal-date');
+    const modalTags = document.getElementById('modal-tags');
+    const modalBody = document.getElementById('modal-body');
     
-    displayModalMessage(message);
-    document.getElementById('message-modal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-
-// ===== Display Modal Message =====
-function displayModalMessage(message) {
-    document.getElementById('modal-date').textContent = formatDate(message.date);
-    document.getElementById('modal-text').innerHTML = formatMessageText(message.text);
+    currentMessageIndex = messagesData.findIndex(msg => msg.id === message.id);
     
-    // Display tags
-    const tags = message.entities ? extractTags(message) : [];
-    const tagsContainer = document.getElementById('modal-tags');
-    tagsContainer.innerHTML = tags.length > 0 ? 
-        tags.map(tag => `<span class="tag">${tag}</span>`).join('') : 
-        '<span class="no-tags">אין תגיות</span>';
+    modalDate.textContent = formatDate(message.date);
+    modalTags.innerHTML = extractTags(message).map(tag => `<span class="tag">${tag}</span>`).join('');
     
-    // Display source/category
-    document.getElementById('modal-source').innerHTML = `
-        <span class="category-badge ${message.category}">${getCategoryName(message.category)}</span>
+    // Process the text with entities before formatting
+    const processedText = processTextForDisplay(message);
+    
+    modalBody.innerHTML = `
+        <div class="message-full">
+            <div class="message-content">${formatMessage(processedText)}</div>
+            ${message.media ? `<div class="message-media">${getMediaHtml(message.media)}</div>` : ''}
+        </div>
     `;
+    
+    modal.style.display = 'block';
 }
 
 // ===== Setup Modal Controls =====
 function setupModalControls() {
-    const modal = document.getElementById('message-modal');
-    const closeBtn = document.querySelector('.modal-close');
-    const closeModalBtn = document.getElementById('close-modal');
-    const prevBtn = document.getElementById('prev-message');
-    const nextBtn = document.getElementById('next-message');
+    // Close buttons
+    document.querySelectorAll('.close').forEach(closeBtn => {
+        closeBtn.onclick = () => {
+            closeBtn.closest('.modal').style.display = 'none';
+        };
+    });
     
-    // Close modal functions
-    const closeModal = () => {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+    // Click outside to close
+    window.onclick = (event) => {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
     };
     
-    closeBtn.addEventListener('click', closeModal);
-    closeModalBtn.addEventListener('click', closeModal);
+    // Navigation buttons
+    document.getElementById('prev-message').onclick = () => navigateMessage(-1);
+    document.getElementById('next-message').onclick = () => navigateMessage(1);
     
-    // Close on outside click
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-        if (modal.style.display === 'flex') {
-            if (e.key === 'Escape') closeModal();
-            if (e.key === 'ArrowLeft') nextMessage();
-            if (e.key === 'ArrowRight') prevMessage();
-        }
-    });
-    
-    // Previous/Next message
-    prevBtn.addEventListener('click', prevMessage);
-    nextBtn.addEventListener('click', nextMessage);
+    // Share button
+    document.getElementById('share-message').onclick = shareMessage;
 }
 
-// ===== Previous Message =====
-function prevMessage() {
-    if (currentMessageIndex > 0) {
-        currentMessageIndex--;
-        displayModalMessage(messagesData[currentMessageIndex]);
+// ===== Navigate Message =====
+function navigateMessage(direction) {
+    const newIndex = currentMessageIndex + direction;
+    if (newIndex >= 0 && newIndex < messagesData.length) {
+        showMessageModal(messagesData[newIndex]);
     }
 }
 
-// ===== Next Message =====
-function nextMessage() {
-    if (currentMessageIndex < messagesData.length - 1) {
-        currentMessageIndex++;
-        displayModalMessage(messagesData[currentMessageIndex]);
+// ===== Share Message =====
+function shareMessage() {
+    const message = messagesData[currentMessageIndex];
+    const text = `${message.text}\n\nמתוך: AI עם הנרי`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'AI עם הנרי',
+            text: text,
+            url: window.location.href
+        });
+    } else {
+        // Fallback - copy to clipboard
+        navigator.clipboard.writeText(text).then(() => {
+            alert('הטקסט הועתק ללוח');
+        });
     }
+}
+
+// ===== Update Stats =====
+function updateStats() {
+    const stats = {
+        'total-messages': messagesData.length,
+        'total-tools': messagesData.filter(msg => msg.category === 'ai-tools').length,
+        'total-workshops': messagesData.filter(msg => msg.category === 'workshops').length,
+        'total-tips': messagesData.filter(msg => msg.category === 'tips').length
+    };
+    
+    Object.entries(stats).forEach(([id, count]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = count;
+    });
 }
 
 // ===== Utility Functions =====
 function formatDate(date) {
-    if (!date || !(date instanceof Date)) return 'תאריך לא זמין';
-    
-    const options = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    
+    const options = { day: 'numeric', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('he-IL', options);
-}
-
-function formatDateKey(date) {
-    if (!date || !(date instanceof Date)) return 'unknown';
-    return date.toISOString().split('T')[0];
-}
-
-function formatTimelineDate(dateStr) {
-    if (!dateStr || dateStr === 'unknown') return 'תאריך לא ידוע';
-    
-    const date = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (formatDateKey(date) === formatDateKey(today)) {
-        return 'היום';
-    } else if (formatDateKey(date) === formatDateKey(yesterday)) {
-        return 'אתמול';
-    } else {
-        return date.toLocaleDateString('he-IL', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    }
 }
 
 function truncateText(text, maxLength) {
     if (!text) return '';
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substr(0, maxLength) + '...';
 }
 
-function formatMessageText(text) {
+function formatMessage(text) {
     if (!text) return '';
     
-    // Convert URLs to clickable links
+    // Ensure text is a string
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
+    
+    // Convert URLs to links
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    let formattedText = text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
     
     // Convert line breaks to <br> tags
-    text = text.replace(/\n/g, '<br>');
+    formattedText = formattedText.replace(/\n/g, '<br>');
     
-    return text;
+    return formattedText;
 }
 
 function extractTags(message) {
-    if (!message.entities) return [];
-    
     const tags = [];
-    message.entities.forEach(entity => {
-        if (entity.type === 'hashtag') {
-            tags.push(entity.text);
-        } else if (entity.type === 'mention') {
-            tags.push(entity.text);
+    
+    // Extract hashtags from text
+    if (message.text) {
+        const hashtagRegex = /#[\u0590-\u05FF\w]+/g;
+        const matches = message.text.match(hashtagRegex);
+        if (matches) {
+            tags.push(...matches);
+        }
+    }
+    
+    // Extract from entities if available
+    if (message.entities && Array.isArray(message.entities)) {
+        message.entities.forEach(entity => {
+            if (entity.type === 'hashtag' && entity.text) {
+                tags.push(entity.text);
+            }
+        });
+    }
+    
+    // Remove duplicates
+    return [...new Set(tags)];
+}
+
+// ===== Process Entities =====
+function processEntities(message) {
+    if (!message.entities || !Array.isArray(message.entities)) return message.text;
+    
+    let processedText = message.text;
+    
+    // Sort entities by offset in reverse order to avoid position shifts
+    const sortedEntities = [...message.entities].sort((a, b) => b.offset - a.offset);
+    
+    sortedEntities.forEach(entity => {
+        if (entity.type === 'url' || entity.type === 'text_link') {
+            // URLs are already handled in formatMessage
+            return;
+        }
+        
+        if (entity.type === 'bold') {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            processedText = processedText.substring(0, start) + 
+                           '<strong>' + processedText.substring(start, end) + '</strong>' + 
+                           processedText.substring(end);
+        }
+        
+        if (entity.type === 'italic') {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            processedText = processedText.substring(0, start) + 
+                           '<em>' + processedText.substring(start, end) + '</em>' + 
+                           processedText.substring(end);
         }
     });
     
-    return [...new Set(tags)]; // Remove duplicates
+    return processedText;
+}
+
+// ===== Process Text for Display =====
+function processTextForDisplay(message) {
+    let processedText = message.text;
+    
+    // Apply entities if they exist
+    if (message.entities && Array.isArray(message.entities)) {
+        // Sort entities by offset in reverse to avoid position changes
+        const sortedEntities = [...message.entities].sort((a, b) => b.offset - a.offset);
+        
+        sortedEntities.forEach(entity => {
+            const start = entity.offset;
+            const end = entity.offset + entity.length;
+            const entityText = processedText.substring(start, end);
+            
+            switch(entity.type) {
+                case 'bold':
+                    processedText = processedText.substring(0, start) + 
+                                  `<strong>${entityText}</strong>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'italic':
+                    processedText = processedText.substring(0, start) + 
+                                  `<em>${entityText}</em>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'text_link':
+                    processedText = processedText.substring(0, start) + 
+                                  `<a href="${entity.url}" target="_blank">${entityText}</a>` + 
+                                  processedText.substring(end);
+                    break;
+                case 'code':
+                    processedText = processedText.substring(0, start) + 
+                                  `<code>${entityText}</code>` + 
+                                  processedText.substring(end);
+                    break;
+            }
+        });
+    }
+    
+    return processedText;
+}
+
+function getMediaHtml(media) {
+    if (!media) return '';
+    
+    if (media.type === 'photo') {
+        return `<img src="media/photos/${media.file_id}.jpg" alt="תמונה" loading="lazy">`;
+    } else if (media.type === 'video') {
+        return `<video controls src="media/files/${media.file_id}.mp4"></video>`;
+    } else if (media.type === 'document') {
+        return `<a href="media/files/${media.file_id}" download class="download-link">
+            <i class="fas fa-download"></i> הורד קובץ
+        </a>`;
+    }
+    
+    return '';
 }
 
 function isWithinDateRange(date, range) {
     const now = new Date();
-    const messageDate = new Date(date);
+    let startDate;
     
     switch (range) {
         case 'week':
-            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            return messageDate >= weekAgo;
+            startDate = new Date(now.setDate(now.getDate() - 7));
+            break;
         case 'month':
-            const monthAgo = new Date(now);
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            return messageDate >= monthAgo;
-        case 'quarter':
-            const quarterAgo = new Date(now);
-            quarterAgo.setMonth(quarterAgo.getMonth() - 3);
-            return messageDate >= quarterAgo;
+            startDate = new Date(now.setMonth(now.getMonth() - 1));
+            break;
+        case '3months':
+            startDate = new Date(now.setMonth(now.getMonth() - 3));
+            break;
         case 'year':
-            const yearAgo = new Date(now);
-            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-            return messageDate >= yearAgo;
+            startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+            break;
         default:
             return true;
     }
+    
+    return date >= startDate;
+}
+
+function groupByMonth(messages) {
+    const grouped = {};
+    
+    messages.forEach(msg => {
+        const monthYear = msg.date.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+        if (!grouped[monthYear]) {
+            grouped[monthYear] = [];
+        }
+        grouped[monthYear].push(msg);
+    });
+    
+    return grouped;
+}
+
+function filterTimeline(filter) {
+    displayTimeline(filter);
 }
 
 function showLoading(show) {
-    const overlay = document.getElementById('loading-overlay');
-    if (overlay) {
-        overlay.classList.toggle('active', show);
-    }
+    const loading = document.getElementById('loading');
+    loading.classList.toggle('active', show);
 }
 
 function showError(message) {
-    // Simple error display - could be enhanced with a proper notification system
-    alert(message);
-}
-
-function updateStats() {
-    document.getElementById('total-messages').textContent = messagesData.length;
+    // Create a nice error message
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #f44336;
+        color: white;
+        padding: 16px 24px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-size: 16px;
+    `;
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
     
-    if (messagesData.length > 0) {
-        const oldestDate = messagesData[messagesData.length - 1].date;
-        const daysDiff = Math.ceil((new Date() - oldestDate) / (1000 * 60 * 60 * 24));
-        document.getElementById('days-active').textContent = daysDiff;
-        
-        const latestDate = messagesData[0].date;
-        const lastUpdateEl = document.getElementById('last-update');
-        if (latestDate) {
-            const today = new Date();
-            const diffDays = Math.floor((today - latestDate) / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 0) {
-                lastUpdateEl.textContent = 'היום';
-            } else if (diffDays === 1) {
-                lastUpdateEl.textContent = 'אתמול';
-            } else {
-                lastUpdateEl.textContent = `לפני ${diffDays} ימים`;
-            }
-        }
-    }
-}
-
-// ===== Generate Sample Data =====
-function generateSampleData() {
-    const sampleMessages = [
-        {
-            text: "היום השקנו גרסה חדשה של ChatGPT עם יכולות משופרות לניתוח תמונות ועבודה עם קבצים. הכלי החדש מאפשר לכם לעלות תמונות ולקבל תיאורים מפורטים, ניתוח והסברים על התוכן שבהן.",
-            category: "ai-tools",
-            date: new Date(2024, 2, 15, 10, 30)
-        },
-        {
-            text: "טיפ חשוב לכתיבת פרומפטים יעילים: השתמשו בשפה ברורה ומפורטת, תנו דוגמאות ובקשו מהמודל לחשוב צעד אחר צעד. זה משפר משמעותית את איכות התוצאות.",
-            category: "tips",
-            date: new Date(2024, 2, 14, 15, 45)
-        },
-        {
-            text: "בסדנה הקרובה נלמד איך לבנות צ'אטבוט חכם עם Claude API. נכסה את כל השלבים מהתחלה - מהגדרת API ועד לפריסה בענן. הרשמה פתוחה!",
-            category: "workshops",
-            date: new Date(2024, 2, 13, 12, 0)
-        },
-        {
-            text: "מקרה שימוש מעניין: חברת היי-טק ישראלית השתמשה ב-AI לניתוח פידבק לקוחות והצליחה לזהות בעיות איכות לפני שהן הפכו לקריטיות. חיסכון של מיליוני שקלים!",
-            category: "cases",
-            date: new Date(2024, 2, 12, 9, 15)
-        },
-        {
-            text: "עדכון חשוב: מידג'רני הכריזה על גרסה 6 עם איכות תמונה משופרת ומהירות יצירה מוגברת. הגרסה החדשה זמינה כעת למנויים.",
-            category: "news",
-            date: new Date(2024, 2, 11, 14, 20)
-        },
-        {
-            text: "מאמר מומלץ על העתיד של AI בחינוך: https://example.com/ai-education-future - סקירה מקיפה של הטכנולוגיות החדשות ושילובן במערכת החינוך.",
-            category: "resources",
-            date: new Date(2024, 2, 10, 16, 30)
-        }
-    ];
-    
-    return sampleMessages;
+    // Remove after 5 seconds
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
 }
